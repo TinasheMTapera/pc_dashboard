@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1528232202702.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2125256760",
+    "id" : "BE0D1721",
+    "lastKnownWriteTime" : 1528280300,
+    "last_content_update" : 1528280300273,
+    "path" : "~/Dropbox/Drexel U/Computer Science/CS530/Project/Plots.R",
+    "project_path" : "Plots.R",
+    "properties" : {
+        "cursorPosition" : "164,17",
+        "scrollLine" : "147",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

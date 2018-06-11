@@ -1,0 +1,209 @@
+#plot scripts
+
+#requirements
+require(tidyverse) #tidy programming
+require(lubridate) #easy working with datetimes
+require(scales) #formatting of axes
+require(viridis) #colour scheme
+
+#convert to camel case
+camel2 <- function(x) {
+  gsub("(^|[^[:alnum:]])([[:alnum:]])", "\\U\\2", x, perl = TRUE)
+}
+
+#custom ggplot theme
+theme_PC <- function () {
+  theme(	text = element_text(size=18,family="Arial", colour = "#222E3E"), 
+         panel.background = element_rect(fill = "white",
+                                         colour = "white", size = 1),
+         panel.grid.major = element_line(size = 0.3,
+                                         linetype = 'solid',
+                                         colour = "grey"),
+         panel.grid.minor = element_line(size = 0.15, 
+                                         linetype = 'solid',
+                                         colour = "grey"),
+         legend.position = "bottom",
+         axis.text.x = element_text(size = 14)
+         #plot.title = element_text(hjust = 0.5)
+  )
+
+}
+
+#activity view plots
+#output$traffic = renderPrint("call traffic")
+TrafficPlot = function(df){
+  
+  
+  df%>%
+    ggplot(aes(x=call_start))+
+    geom_freqpoly(binwidth=60*60*24, colour = "blue")+
+    labs(title="Call Traffic Over Time", y = "Count", x = "Date")+
+    scale_color_viridis(option = "viridis", discrete = TRUE)+
+    theme_PC()
+    
+}
+
+
+#output$PerQuarter = renderPrint("call freq per quarter")
+QuarterPlot = function(df){
+  
+  df$Month = month(df$call_start, label = TRUE)
+  
+  Fall = c("Sep", "Oct", "Nov", "Dec")
+  Winter = c("Jan", "Feb", "Mar")
+  Spring = c("Apr", "May", "Jun")
+  Summer = c("Jul", "Aug")
+  
+  df = df%>%
+    mutate(Quarter = ifelse(.$Month %in% Fall, "Fall",
+                     ifelse(.$Month %in% Winter, "Winter",
+                     ifelse(.$Month %in% Spring, "Spring", "Summer"))))
+  
+  
+  df%>%
+    select(Quarter)%>%
+    ggplot(aes(x=Quarter, fill = Quarter))+
+    geom_bar()+
+    labs(title="Call Frequency Per\nQuarter", y = "Count", x = "Quarter")+
+    guides(fill=FALSE)+
+    scale_fill_viridis(discrete = TRUE)+
+    theme_PC()
+  
+}
+
+
+#output$PerDay = renderPrint("call freq per day of week")
+DayPlot = function(df){
+  
+  shifts = hour(df$call_start) < 20
+  df$call_start[shifts] = df$call_start[shifts] - days(1)
+  
+  df$Day = wday(df$call_start, label=TRUE)
+  df%>%
+    select(Day)%>%
+    ggplot(aes(x=Day, fill = Day))+
+    geom_bar()+
+    labs(title="Call Frequency Per\nDay of Week", y = "Count", x = "Day")+
+    guides(fill=FALSE)+
+    scale_fill_viridis(discrete = TRUE)+
+    theme_PC()
+  
+}
+
+
+#output$PerHour = renderPrint("call freq per hour of day")
+HourPlot = function(df){
+  
+  df$Hour = hour(df$call_start)
+  
+  df%>%
+    select(Hour)%>%
+    ggplot(aes(x=Hour, fill = Hour))+
+    geom_bar()+
+    labs(title="Call Frequency Per\nHour of Night", y = "Count", x = "Hour")+
+    scale_x_continuous(breaks = pretty_breaks())+
+    guides(fill=FALSE)+
+    scale_fill_viridis(discrete = TRUE)+
+    theme_PC()
+  
+}
+
+#counselor view outputs
+CallsPlot = function(df, by="both"){
+  
+  if(by != "both"){
+    df%>%
+      select(by)%>%
+      gather(key = "Role", value = "Counselor", factor_key = TRUE)%>%
+      group_by(Counselor,Role)%>%
+      count()%>%
+      ggplot(aes(x=reorder(Counselor, n), y=n, fill = by))+
+      geom_col()+
+      scale_fill_discrete(labels = paste0("As ", camel2(by)))+
+      labs(title = "Number of Calls Per Counselor",
+           y = "Count",
+           x = "Counselor",
+           fill = "Role")+
+      coord_flip()+
+      scale_fill_viridis(discrete = TRUE)+
+      theme_PC()
+  }else{
+    df%>%
+      select(one_of(c("primary","secondary")))%>%
+      gather(key = "Role", value = "Counselor", factor_key = TRUE)%>%
+      group_by(Counselor,Role)%>%
+      count()%>%
+      ggplot(aes(x=reorder(Counselor, n), y=n, fill = Role))+
+      geom_col()+
+      scale_fill_discrete(labels = c("As Primary", "As Secondary"))+
+      labs(title = "Number of Calls Per Counselor",
+           y = "Count",
+           x = "Counselor")+
+      coord_flip()+
+      scale_fill_viridis(discrete = TRUE)+
+      theme_PC()
+  }
+}
+
+
+#output$Skills = renderPrint("Number of skills used")
+SkillsPlot = function(df){
+  
+  df%>%
+    select(starts_with("skills"))%>%
+    gather(key = "Skill", value = "value", factor_key = TRUE)%>%
+    mutate(Skill = gsub("skills\\.", "", .$Skill))%>%
+    filter(value != 0)%>%
+    group_by(Skill)%>%
+    count(value)%>%
+    ggplot(aes(x=reorder(Skill, n), y=n, fill = Skill))+
+    geom_col()+
+    guides(fill=FALSE)+
+    labs(title="Skills Used By Counselors",
+         y = "Count",
+         x = "Skill")+
+    coord_flip()+
+    scale_fill_viridis(discrete = TRUE)+
+    theme_PC()
+}
+
+#topics view outputs
+#output$Topics = renderPrint("Topics heatmap")
+TopicsPlot = function(lda){
+  
+  lda$term = factor(lda$term,
+                    levels(lda$term)[order(levels(lda$term), decreasing = TRUE)])
+  lda%>%
+    ggplot(aes(topic, term))+
+    geom_tile(aes(fill = beta), colour="white")+
+    labs(fill = "Word Influence",
+         title = "Call Body Topics Vs. Word\nInfluence on Topics",
+         x = "Topic",
+         y = "Words")+
+    scale_fill_viridis(discrete = FALSE)+
+    guides(fill = guide_colorbar(title.position = "top", barwidth = 15))+
+    theme_PC()
+}
+
+#output$SecondaryIssues = renderPrint("Secondary Issues")
+IssuePlot = function(df){
+  
+  df%>%
+    select(contains("issues"))%>%
+    gather(key = "Issue", value = "value", factor_key = TRUE)%>%
+    mutate(Type = ifelse(grepl("primary",.$Issue), "Primary", "Secondary"))%>%
+    mutate(Issue = gsub(".*_issues\\.", "", .$Issue))%>%
+    filter(value != 0)%>%
+    group_by(Issue, Type)%>%
+    count(value)%>%
+    ggplot(aes(x=reorder(Issue, n), y=n, fill = Type))+
+    geom_col()+
+    labs(title = "Issues Reported By\nCounselors",
+         y = "Count",
+         x = "Issue")+
+    scale_fill_discrete(labels = c("Primary Issue", "Secondary Issue"))+
+    scale_y_continuous(breaks = pretty_breaks())+
+    coord_flip()+
+    scale_fill_viridis(discrete = TRUE)+
+    theme_PC()
+}

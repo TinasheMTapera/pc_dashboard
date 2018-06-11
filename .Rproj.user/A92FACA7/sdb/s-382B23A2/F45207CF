@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#topic modelling\n\nrequire(tidytext)\nrequire(tm)\nrequire(sentimentr)\nrequire(topicmodels)\ndata(stop_words)\nextra_words = c(\"call\", \"caller\", \"called\", \"sample\", \"said\", \"stated\", \"counselor\", \"primary\", \"secondary\")\n\n\n#function to tokenise the text column and remove stop words\nTidyText = function(dat){\n  \n  # log = 1:length(column_text)\n  # #column_text = as.character(column_text)\n  # \n  # #creating bigrams to index negation\n  # if(ngrams == 2){\n  #   dd = data.frame(log, column_text, stringsAsFactors = FALSE)%>%\n  #     unnest_tokens(., output = ngram, input = column_text, \n  #                   token = \"ngrams\",\n  #                   n = ngrams)%>%\n  #     separate(ngram, c(\"word1\", \"word\"), sep = \" \")%>%\n  #     filter(word1 == \"not\")%>%\n  #     select(one_of(c(\"log\", \"word\")))\n  #     \n  #   \n  # }else{\n  #   #else use unigrams and return with stop words removed\n  #   dd = data.frame(log, column_text, stringsAsFactors = FALSE)%>%\n  #     unnest_tokens(., output = word, input = column_text)%>%\n  #     anti_join(stop_words)%>%\n  #     count(log, word)\n  # }\n  \n  dat%>%\n    select(body)%>%\n    mutate(log = 1:nrow(.))%>%\n    unnest_tokens(., output = word, input = body)%>%\n    anti_join(stop_words)%>%\n    filter(!word %in% extra_words)%>%\n    group_by(log)%>%\n    mutate(body = paste0(word, collapse = \" \"))%>%\n    select(one_of(c(\"log\", \"body\")))%>%\n    distinct()%>%\n    ungroup()%>%\n    return()\n}\n\n#sentiment analysis function using sentimentr package\nGetSentiment = function(column_text){\n  \n  get_sentences(column_text)%>%\n    sentiment_by()%>%\n    as_tibble()%>%\n    return()\n  \n}\n\n#function to compute LDA topic model\nTidyLDA = function(dat, k){\n  \n  corp = dat%>%\n    filter(body != \"\")%>%\n    TidyText()%>%\n    select(body)%>%\n    VectorSource()%>%\n    Corpus()\n  \n  #dict = corp\n  corp = tm_map(corp, stemDocument)\n  #corp = tm_map(corp, stemCompletion, dictionary=dict, type = \"first\")\n  dtm = corp%>%\n    DocumentTermMatrix()\n  \n  lda = LDA(dtm, k, control = list(seed = 1234))\n  tidy(lda, matrix = \"beta\")%>%\n    mutate(beta = ifelse(beta > quantile(beta, c(0.8))[1], beta, 0))%>%\n    filter(beta != 0)%>%\n    mutate(term = factor(term),\n           topic = factor(topic))%>%\n    arrange(term)%>%\n    return()\n  \n}\n",
+    "created" : 1528320196976.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1288543226",
+    "id" : "F45207CF",
+    "lastKnownWriteTime" : 1528320914,
+    "last_content_update" : 1528320914728,
+    "path" : "~/Google Drive/DataScience/pc_dashboard/TopicModelling.R",
+    "project_path" : "TopicModelling.R",
+    "properties" : {
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

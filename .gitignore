@@ -1,0 +1,4 @@
+rsconnect
+*.Rproj
+.RData
+*.zip
