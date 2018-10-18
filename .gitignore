@@ -2,5 +2,7 @@ rsconnect
 *.Rproj
 .RData
 *.zip
-.Rproj.user
+.Rproj.user/
 *.csv
+!Sample_PCH_Call_Logs.csv
+.Rhistory

@@ -1,19 +1,19 @@
 ## requirements!!
-#if (!require("pacman")) install.packages("pacman")
-#pacman::p_load(shiny, 
-               # DT, 
-               # rlang, 
-               # shinyjs, 
-               # shinythemes, 
-               # tidyverse, 
-               # lubridate,
-               # scales,
-               # viridis,
-               # tidytext,
-               # sentimentr,
-               # tm,
-               # topicmodels, 
-               # plotly)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(shiny, 
+               DT,
+               rlang,
+               shinyjs,
+               shinythemes,
+               tidyverse,
+               lubridate,
+               scales,
+               viridis,
+               tidytext,
+               sentimentr,
+               tm,
+               topicmodels,
+               plotly)
 
 #upload the data and update dataset
 source("./NewDataSet.R", local=TRUE)
