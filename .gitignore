@@ -2,3 +2,5 @@ rsconnect
 *.Rproj
 .RData
 *.zip
+.Rproj.user
+*.csv
