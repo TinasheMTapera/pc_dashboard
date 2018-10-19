@@ -58,7 +58,7 @@ GetSentiment = function(column_text){
 }
 
 #function to compute LDA topic model
-TidyLDA = function(dat, k){
+TidyLDA = function(dat, k=10){
   
   corp = dat%>%
     filter(body != "")%>%
@@ -76,10 +76,15 @@ TidyLDA = function(dat, k){
   lda = LDA(dtm, k, control = list(seed = 1234))
   tidy(lda, matrix = "beta")%>%
     mutate(beta = ifelse(beta > quantile(beta, c(0.8))[1], beta, 0))%>%
-    filter(beta != 0)%>%
+    group_by(term)%>%
+    mutate(m = mean(beta))%>%
+    arrange(-m, -beta, term)%>%
+    nest()%>%
+    slice(1:10)%>%
+    unnest()%>%
     mutate(term = factor(term),
            topic = factor(topic))%>%
-    arrange(term)%>%
+    select(-m)%>%
     return()
   
 }
