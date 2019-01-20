@@ -6,3 +6,4 @@ rsconnect
 *.csv
 !Sample_PCH_Call_Logs.csv
 .Rhistory
+.Rproj.user

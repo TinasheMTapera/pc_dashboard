@@ -58,10 +58,7 @@ QuarterPlot = function(df){
   df = df%>%
     mutate(Quarter = ifelse(.$Month %in% Fall, "Fall",
                      ifelse(.$Month %in% Winter, "Winter",
-                     ifelse(.$Month %in% Spring, "Spring", "Summer"))))
-  
-  
-  df%>%
+                     ifelse(.$Month %in% Spring, "Spring", "Summer"))))%>%
     select(Quarter)%>%
     ggplot(aes(x=Quarter, fill = Quarter))+
     geom_bar()+

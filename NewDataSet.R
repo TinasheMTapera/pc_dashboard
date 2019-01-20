@@ -1,7 +1,6 @@
 #requirements
 require(tidyverse) #tidy programming
 require(lubridate) #easy working with datetimes
-Sys.setenv(TZ="America/New_York")
 
 # wrapper function to unzip a file and place the result in a directory "data"
 Unzip_Data = function(zip_file){
@@ -56,65 +55,48 @@ Load_Data = function(f){
   tryCatch({
     #read in the dataset
     #f = list.files("./data")[1]
-    dat = read.csv(f,fill=TRUE)
+    dat = read.csv(f,fill=TRUE)%>%
+      .[-c(1:2),]%>%
+      as.tibble()
     
     #special case
     if(nrow(dat) < 2){
-      return()
+      return(NULL)
     }
     
-    #get survey questions
-    questions = dat[1,]%>%
-      t()%>%
-      as.character()
-    
-    #remove junk rows from qualtrics
-    dat = dat[-c(1,2),]
+    #remove incomplete rows from qualtrics
     dat = dat%>%
       filter(Finished == "True" | Finished == "TRUE")
     
     #convert datetimes for call start and end
-    call_start = strptime(
-      paste0(
-        as.character(dat$start_date), " ",
-        Add_Zero(dat$start_time_1), ":",
-        Add_Zero(dat$start_time_2), " ",
-        toupper(as.character(dat$start_time_3))
-      ),
-      format = "%m-%d-%Y %I:%M %p", 
-      tz = "America/New_York")
-    
-    call_end = strptime(
-      paste0(
-        as.character(dat$end_date), " ",
-        Add_Zero(dat$end_time_1), ":",
-        Add_Zero(dat$end_time_2), " ",
-        toupper(as.character(dat$end_time_3))
-      ), 
-      format = "%m-%d-%Y %I:%M %p", 
-      tz = "America/New_York")
+    dat = dat%>%
+      mutate(call_start = mdy_hm(paste0(
+        as.character(.$start_date), " ",
+        Add_Zero(.$start_time_1), ":",
+        Add_Zero(.$start_time_2), " ",
+        toupper(as.character(.$start_time_3)))),
+        call_end = mdy_hm(paste0(
+          as.character(.$end_date), " ",
+          Add_Zero(.$end_time_1), ":",
+          Add_Zero(.$end_time_2), " ",
+          toupper(as.character(.$end_time_3)))))%>%
+      select(-c(start_date:end_time_3))
     
     #record when log was submitted
-    submitted = ymd_hms(dat$RecordedDate, tz = "UTC")
+    dat = dat%>%
+      mutate(Recorded = ymd_hms(.$RecordedDate))%>%
+      select(-RecordedDate)
     
     #only take columns from relevant call info onwards
-    start_column = names(dat)%>%
-      grep("primary",.,value=FALSE)%>%
-      .[1]
-    dat = dat[,start_column:ncol(dat)]
+    dat = dat%>%
+      select(primary:Recorded)
     
     #refactor
-    body_ind =  names(dat)%>%
-      grep("body",.,value=FALSE)%>%
-      .[1]
-    dat[,-body_ind] = droplevels.data.frame(dat[,-body_ind])
-    dat[,body_ind] = as.character(dat[,body_ind])
+    dat = dat%>%
+      mutate(body = as.character(body),
+             opinion = as.character(opinion))
     
-    feedback_ind = names(dat)%>%
-      grep("opinion",.,value=FALSE)%>%
-      .[1]
-    dat[,feedback_ind] = as.character(dat[,feedback_ind])
-    
+    # expand grid of checkbox factors
     checkboxes = names(dat)%>%
       grep("issues|skills|referrals|marketing",.,value = TRUE)
     

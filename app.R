@@ -1,4 +1,7 @@
 ## requirements!!
+TZ = "America/New_York"
+Sys.setenv(TZ="America/New_York")
+
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(shiny, 
                DT,
