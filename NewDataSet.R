@@ -94,7 +94,7 @@ Load_Data = function(f){
     #refactor
     dat = dat%>%
       mutate(body = as.character(body),
-             opinion = as.character(opinion))
+             opinion = as.character(couns_opinion))
     
     # expand grid of checkbox factors
     checkboxes = names(dat)%>%
