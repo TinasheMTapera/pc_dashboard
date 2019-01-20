@@ -1,6 +1,7 @@
 #requirements
 require(tidyverse) #tidy programming
 require(lubridate) #easy working with datetimes
+require(splitstackshape) #working with checkboxes
 
 # wrapper function to unzip a file and place the result in a directory "data"
 Unzip_Data = function(zip_file){
@@ -55,8 +56,7 @@ Load_Data = function(f){
   tryCatch({
     #read in the dataset
     #f = list.files("./data")[1]
-    dat = read.csv(f,fill=TRUE)%>%
-      .[-c(1:2),]%>%
+    dat = qualtRics::readSurvey(f)%>%
       as.tibble()
     
     #special case
@@ -89,30 +89,24 @@ Load_Data = function(f){
     
     #only take columns from relevant call info onwards
     dat = dat%>%
-      select(primary:Recorded)
+      select(primary:couns_opinion, call_start:Recorded)
     
     #refactor
     dat = dat%>%
       mutate(body = as.character(body),
-             opinion = as.character(couns_opinion))
+             opinion = as.character(couns_opinion)) %>%
+      select(-couns_opinion)
     
     # expand grid of checkbox factors
-    checkboxes = names(dat)%>%
-      grep("issues|skills|referrals|marketing",.,value = TRUE)
+    checkboxes = c("primary_issues", "secondary_issues", "skills", "referrals", "marketing")
     
-    for(i in 1:length(checkboxes)){
+    for(x in checkboxes) {
       
-      if(length(levels(dat[,checkboxes[i]])) < 2){
-        dat[,checkboxes[i]] = NULL
-        next()
-      }
-      
-      dat = cbind(dat, Split_CheckBoxes(dat[,checkboxes[i]], checkboxes[i]))
-      dat[,checkboxes[i]] = NULL
+      dat = concat.split.expanded(dat, x, type = "character", drop = TRUE) %>%
+        as.tibble()
     }
     
-    cbind(submitted, call_start, call_end, dat)%>%
-      return()
+    return(dat)
   }, 
   error = function(err){
     print("Load data error! Check that this is the correct file type!")

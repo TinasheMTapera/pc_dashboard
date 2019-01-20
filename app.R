@@ -16,7 +16,8 @@ pacman::p_load(shiny,
                sentimentr,
                tm,
                topicmodels,
-               plotly)
+               plotly,
+               devtools)
 
 #upload the data and update dataset
 source("./NewDataSet.R", local=TRUE)
@@ -37,6 +38,8 @@ require(sentimentr)
 require(tm)
 require(topicmodels)
 require(plotly)
+require(devtools)
+require(qualtRics)
 
 # Define UI
 ui=fluidPage(

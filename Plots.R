@@ -55,7 +55,7 @@ QuarterPlot = function(df){
   Spring = c("Apr", "May", "Jun")
   Summer = c("Jul", "Aug")
   
-  df = df%>%
+  df%>%
     mutate(Quarter = ifelse(.$Month %in% Fall, "Fall",
                      ifelse(.$Month %in% Winter, "Winter",
                      ifelse(.$Month %in% Spring, "Spring", "Summer"))))%>%
@@ -73,12 +73,15 @@ QuarterPlot = function(df){
 #output$PerDay = renderPrint("call freq per day of week")
 DayPlot = function(df){
   
-  shifts = hour(df$call_start) < 20
-  df$call_start[shifts] = df$call_start[shifts] - days(1)
+  # some shifts start their calls after midnight; pull these
+  # over to the previous day
   
-  df$Day = wday(df$call_start, label=TRUE)
-  df%>%
-    select(Day)%>%
+  df %>%
+    mutate(Day = ifelse(hour(call_start ) < 2,
+                        as.character(call_start - ddays(1)),
+                        as.character(call_start))) %>%
+    mutate(Day = wday(ymd_hms(Day), label = TRUE)) %>%
+    select(Day) %>%
     ggplot(aes(x=Day, fill = Day))+
     geom_bar()+
     labs(title="Call Frequency Per\nDay of Week", y = "Count", x = "Day")+
@@ -150,8 +153,9 @@ SkillsPlot = function(df){
   df%>%
     select(starts_with("skills"))%>%
     gather(key = "Skill", value = "value", factor_key = TRUE)%>%
-    mutate(Skill = gsub("skills\\.", "", .$Skill))%>%
+    mutate(Skill = gsub("skills_", "", .$Skill))%>%
     filter(value != 0)%>%
+    filter(!(stringr::str_detect(Skill, "TEXT"))) %>%
     group_by(Skill)%>%
     count(value)%>%
     ggplot(aes(x=reorder(Skill, n), y=n, fill = Skill))+
@@ -192,8 +196,9 @@ IssuePlot = function(df){
     select(contains("issues"))%>%
     gather(key = "Issue", value = "value", factor_key = TRUE)%>%
     mutate(Type = ifelse(grepl("primary",.$Issue), "Primary", "Secondary"))%>%
-    mutate(Issue = gsub(".*_issues\\.", "", .$Issue))%>%
+    mutate(Issue = gsub("^.*_issues_", "", .$Issue))%>%
     filter(value != 0)%>%
+    filter(!(stringr::str_detect(Issue, "TEXT"))) %>%
     group_by(Issue, Type)%>%
     count(value)%>%
     ggplot(aes(x=reorder(Issue, n), y=n, fill = Type))+
