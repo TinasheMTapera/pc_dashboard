@@ -336,10 +336,10 @@ server=shinyServer(function(input, output, session) {
       
       output$stat3 = renderUI({
         stat = values$subset%>%
-          group_by(repeat.)%>%
+          group_by(`repeat`)%>%
           summarise(n = n())%>%
           mutate(freq = (n / sum(n))*100)%>%
-          filter(repeat. == "Yes")%>%
+          filter(`repeat` == "Yes")%>%
           select(freq)%>%
           round(2)%>%
           as.character()
