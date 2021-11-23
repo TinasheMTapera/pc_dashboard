@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/136987323.svg)](https://zenodo.org/badge/latestdoi/136987323)
+
 README
 
 1. Run Locally:
